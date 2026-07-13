@@ -2,7 +2,6 @@ const loader = document.getElementById('loader');
     const progress = document.getElementById('progress');
     const year = document.getElementById('year');
     const scrollbar = document.getElementById('scrollbar');
-    const cursor = document.getElementById('cursor');
     const header = document.getElementById('header');
     const topBtn = document.getElementById('topBtn');
     year.textContent = new Date().getFullYear();
@@ -115,14 +114,6 @@ scale(1.01)`;      });
         rect = null;
         el.style.transform = '';
       });
-    });
-
-    window.addEventListener('pointermove', e => {
-      cursor.style.transform = `translate3d(${e.clientX - 12}px, ${e.clientY - 12}px, 0)`;
-    }, { passive: true });
-    document.querySelectorAll('a, button, .magnetic-card, .section-card').forEach(el => {
-      el.addEventListener('pointerenter', () => cursor.classList.add('is-hover'));
-      el.addEventListener('pointerleave', () => cursor.classList.remove('is-hover'));
     });
 
     const topSection = document.getElementById('top');
