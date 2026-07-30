@@ -962,7 +962,7 @@
                 <span class="chip">📍 Bihać</span><span class="chip">📞 +387 62 169 989</span><span class="chip">💬 WhatsApp</span><span class="chip">✉ kalivuk@gmail.com</span>
               </div>
 
-    <form id="reservationForm">
+   <form id="reservationForm">
 
     <div class="form">
 
@@ -977,7 +977,12 @@
         </div>
 
         <div class="field">
-            <input type="number" id="osobe" name="Broj osoba" placeholder=" " required />
+            <input type="email" id="email" name="Email" placeholder=" " required />
+            <label for="email">Email adresa</label>
+        </div>
+
+        <div class="field">
+            <input type="number" id="osobe" name="Broj osoba" placeholder=" " min="1" required />
             <label for="osobe">Broj osoba</label>
         </div>
 
