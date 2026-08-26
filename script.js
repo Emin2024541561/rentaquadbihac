@@ -73,7 +73,7 @@ const loader = document.getElementById('loader');
         if (!entry.isIntersecting) return;
         navLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === `#${entry.target.id}`));
       });
-    }, { threshold: 0.5 });
+    }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
     sections.forEach(s => sectionObserver.observe(s));
 
     const tiltTargets = document.querySelectorAll('[data-tilt]');
@@ -210,3 +210,134 @@ behavior:"smooth"
 });
 
 };
+
+/* ===================================================
+   HORIZONTALNA (PINNED) GALERIJA
+=================================================== */
+(function () {
+
+  const section = document.getElementById('galerija');
+  if (!section) return;
+
+  const sticky   = section.querySelector('.gs-sticky');
+  const head     = section.querySelector('.gs-head');
+  const viewport = document.getElementById('gsViewport');
+  const track    = document.getElementById('gsTrack');
+  const bar      = document.getElementById('gsBar');
+  const current  = document.getElementById('gsCurrent');
+  const items    = Array.prototype.slice.call(track.children);
+  if (!items.length) return;
+
+  const RATIO        = 16 / 10;   // format svake slike
+  const WIDTH_LIMIT  = 0.62;      // max sirina slike u odnosu na ekran
+  const SPEED_FACTOR = 0.55;      // koliko vertikalnog skrola treba
+  const MAX_SCREENS  = 5;         // gornja granica trajanja "kljucanja"
+
+  let isNative  = false;
+  let maxScroll = 0;
+  let ticking   = false;
+  let resizeId  = null;
+
+  const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+
+  function setProgress(p) {
+    bar.style.width = (p * 100).toFixed(2) + '%';
+    const i = clamp(Math.round(p * (items.length - 1)) + 1, 1, items.length);
+    current.textContent = String(i).padStart(2, '0');
+  }
+
+  function update() {
+    if (isNative) {
+      const m = viewport.scrollWidth - viewport.clientWidth;
+      setProgress(m > 0 ? viewport.scrollLeft / m : 0);
+      return;
+    }
+    const total = section.offsetHeight - sticky.offsetHeight;
+    const p = total > 0 ? clamp(-section.getBoundingClientRect().top / total, 0, 1) : 0;
+    track.style.transform = 'translate3d(' + (-p * maxScroll).toFixed(2) + 'px,0,0)';
+    setProgress(p);
+  }
+
+  function layout() {
+    // pinned efekat samo na sirokim (landscape) ekranima
+    isNative =
+      window.innerWidth < 900 ||
+      window.innerWidth / window.innerHeight < 1.1 ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    section.classList.toggle('gs-native', isNative);
+    section.style.height = '';
+    track.style.transform = '';
+
+    // prva slika se poravnava sa naslovom
+    const pad = Math.max(
+      0,
+      Math.round(head.getBoundingClientRect().left - viewport.getBoundingClientRect().left)
+    );
+    section.style.setProperty('--gs-pad', pad + 'px');
+
+    const vw = viewport.clientWidth;
+    let w, h;
+
+    if (isNative) {
+      w = Math.min(vw - pad * 2, 640);
+      h = w / RATIO;
+    } else {
+      h = viewport.clientHeight;          // sva raspoloziva visina
+      w = h * RATIO;
+      const maxW = vw * WIDTH_LIMIT;
+      if (w > maxW) { w = maxW; h = w / RATIO; }
+    }
+
+    section.style.setProperty('--gs-w', Math.round(w) + 'px');
+    section.style.setProperty('--gs-h', Math.round(h) + 'px');
+
+    if (isNative) { maxScroll = 0; update(); return; }
+
+    const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+    const trackW = items.length * w + (items.length - 1) * gap + pad * 2;
+    maxScroll = Math.max(0, Math.round(trackW - vw));
+
+    const vh = sticky.offsetHeight || window.innerHeight;
+    const distance = maxScroll === 0
+      ? 0
+      : clamp(maxScroll * SPEED_FACTOR, vh * 0.8, vh * MAX_SCREENS);
+
+    section.style.height = Math.round(vh + distance) + 'px';
+    update();
+  }
+
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => { update(); ticking = false; });
+  };
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  viewport.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeId);
+    resizeId = setTimeout(layout, 120);
+  });
+  window.addEventListener('orientationchange', () => setTimeout(layout, 250));
+  window.addEventListener('load', layout);
+
+  // slike se ucitaju prije nego se dodje do sekcije (nema praznih polja)
+  if ('IntersectionObserver' in window) {
+    const preload = new IntersectionObserver((entries, obs) => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        items.forEach(fig => {
+          const img = fig.querySelector('img');
+          if (img && img.loading === 'lazy') img.loading = 'eager';
+        });
+        obs.disconnect();
+      });
+    }, { rootMargin: '150% 0px' });
+    preload.observe(section);
+  }
+
+  layout();
+  setTimeout(layout, 400);
+
+})();

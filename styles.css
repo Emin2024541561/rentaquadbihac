@@ -2468,3 +2468,192 @@ width:calc(100% - 14px);
 
     object-fit:contain;
 }
+
+/* ===================================================
+   HORIZONTALNA (PINNED) GALERIJA
+=================================================== */
+
+/* sticky ne radi ako je overflow-x:hidden na html/body -> clip */
+@supports (overflow-x: clip){
+  html,
+  body{
+    overflow-x:clip !important;
+  }
+}
+
+.gallery-scroll{
+  padding:0;
+  position:relative;
+}
+
+.gallery-scroll .gs-sticky{
+  position:sticky;
+  top:0;
+  height:100vh;
+  height:100svh;
+  display:flex;
+  flex-direction:column;
+  gap:clamp(12px,2vh,24px);
+  padding:calc(var(--header-h) + 44px) 0 clamp(20px,3.5vh,40px);
+  overflow:hidden;
+}
+
+.gs-head{
+  flex:0 0 auto;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:28px;
+}
+
+.gs-head .headline{
+  margin-top:14px;
+}
+
+.gs-meta{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  padding-bottom:6px;
+  color:rgba(255,255,255,.62);
+  font-size:.78rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+.gs-counter b{
+  color:#fff;
+  font-size:1.1rem;
+  font-weight:800;
+  letter-spacing:.02em;
+}
+
+.gs-hint{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+}
+
+.gs-hint svg{
+  animation:gsNudge 1.8s ease-in-out infinite;
+}
+
+@keyframes gsNudge{
+  0%,100%{transform:translateX(0)}
+  50%{transform:translateX(6px)}
+}
+
+.gs-viewport{
+  position:relative;
+  flex:1 1 0;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  overflow:hidden;
+}
+
+.gs-track{
+  display:flex;
+  align-items:center;
+  gap:var(--gs-gap,clamp(14px,1.3vw,22px));
+  padding-inline:var(--gs-pad,var(--pad));
+  will-change:transform;
+}
+
+.gs-item{
+  margin:0;
+  flex:0 0 auto;
+  width:var(--gs-w,58vw);
+  height:var(--gs-h,36vw);
+  position:relative;
+  overflow:hidden;
+  border-radius:26px;
+  background:#111;
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 26px 70px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.gs-item img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  display:block;
+  transition:transform .7s cubic-bezier(.16,1,.3,1);
+}
+
+.gs-item:hover img{
+  transform:scale(1.04);
+}
+
+.gs-item::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(to top, rgba(0,0,0,.5) 0%, rgba(0,0,0,0) 55%);
+}
+
+.gs-progress{
+  flex:0 0 auto;
+  height:3px;
+  border-radius:999px;
+  background:rgba(255,255,255,.1);
+  overflow:hidden;
+}
+
+.gs-progress-bar{
+  display:block;
+  height:100%;
+  width:0;
+  border-radius:999px;
+  background:linear-gradient(90deg,var(--orange),var(--orange-2));
+  box-shadow:0 0 18px var(--orange-glow);
+}
+
+/* --- fallback: telefon / reduced motion -> obican horizontalni swipe --- */
+.gallery-scroll.gs-native{
+  padding:0;
+  scroll-margin-top:90px;
+}
+
+.gs-native .gs-sticky{
+  position:static;
+  height:auto;
+  padding:clamp(56px,9vw,90px) 0;
+  overflow:visible;
+}
+
+.gs-native .gs-viewport{
+  flex:0 0 auto;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+
+.gs-native .gs-viewport::-webkit-scrollbar{
+  display:none;
+}
+
+.gs-native .gs-track{
+  transform:none !important;
+}
+
+.gs-native .gs-item{
+  scroll-snap-align:center;
+}
+
+.gs-native .gs-meta{
+  display:none;
+}
+
+@media (max-width:900px){
+  .gs-head{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:14px;
+  }
+}
