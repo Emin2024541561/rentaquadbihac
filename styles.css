@@ -2471,6 +2471,8 @@ width:calc(100% - 14px);
 
 /* ===================================================
    HORIZONTALNA (PINNED) GALERIJA
+   radi na svim uredjajima: TV, monitor, laptop,
+   tablet, mobitel i mali mobitel
 =================================================== */
 
 /* sticky ne radi ako je overflow-x:hidden na html/body -> clip */
@@ -2484,6 +2486,7 @@ width:calc(100% - 14px);
 .gallery-scroll{
   padding:0;
   position:relative;
+  scroll-margin-top:0;
 }
 
 .gallery-scroll .gs-sticky{
@@ -2493,30 +2496,46 @@ width:calc(100% - 14px);
   height:100svh;
   display:flex;
   flex-direction:column;
-  gap:clamp(12px,2vh,24px);
-  padding:calc(var(--header-h) + 44px) 0 clamp(20px,3.5vh,40px);
+  gap:clamp(10px,1.8vh,22px);
+  padding:calc(var(--header-h) + 44px) 0 clamp(18px,3vh,38px);
   overflow:hidden;
 }
 
+/* ---- naslov + brojac ---- */
 .gs-head{
   flex:0 0 auto;
-  display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
-  gap:28px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:center;
+  column-gap:18px;
+}
+
+.gs-head .eyebrow{
+  grid-column:1;
+  grid-row:1;
+  justify-self:start;
+}
+
+.gs-head .gs-meta{
+  grid-column:2;
+  grid-row:1;
+  justify-self:end;
 }
 
 .gs-head .headline{
-  margin-top:14px;
+  grid-column:1 / -1;
+  grid-row:2;
+  margin:clamp(8px,1.4vh,18px) 0 0;
+  font-size:clamp(1.65rem,4.4vw,3.7rem);
+  max-width:16ch;
 }
 
 .gs-meta{
   display:flex;
   align-items:center;
-  gap:18px;
-  padding-bottom:6px;
+  gap:16px;
   color:rgba(255,255,255,.62);
-  font-size:.78rem;
+  font-size:.75rem;
   letter-spacing:.14em;
   text-transform:uppercase;
   white-space:nowrap;
@@ -2524,7 +2543,7 @@ width:calc(100% - 14px);
 
 .gs-counter b{
   color:#fff;
-  font-size:1.1rem;
+  font-size:1.05rem;
   font-weight:800;
   letter-spacing:.02em;
 }
@@ -2544,6 +2563,7 @@ width:calc(100% - 14px);
   50%{transform:translateX(6px)}
 }
 
+/* ---- traka sa slikama ---- */
 .gs-viewport{
   position:relative;
   flex:1 1 0;
@@ -2556,19 +2576,22 @@ width:calc(100% - 14px);
 .gs-track{
   display:flex;
   align-items:center;
-  gap:var(--gs-gap,clamp(14px,1.3vw,22px));
+  gap:var(--gs-gap,clamp(10px,1.2vw,22px));
   padding-inline:var(--gs-pad,var(--pad));
   will-change:transform;
+  transform:translate3d(0,0,0);
+  backface-visibility:hidden;
 }
 
 .gs-item{
   margin:0;
   flex:0 0 auto;
-  width:var(--gs-w,58vw);
-  height:var(--gs-h,36vw);
+  width:var(--gs-w,min(86vw,560px));
+  height:var(--gs-h,auto);
+  aspect-ratio:16/10;
   position:relative;
   overflow:hidden;
-  border-radius:26px;
+  border-radius:clamp(16px,2vw,26px);
   background:#111;
   border:1px solid rgba(255,255,255,.08);
   box-shadow:0 26px 70px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08);
@@ -2612,9 +2635,80 @@ width:calc(100% - 14px);
   box-shadow:0 0 18px var(--orange-glow);
 }
 
-/* --- fallback: telefon / reduced motion -> obican horizontalni swipe --- */
+/* ---- tablet ---- */
+@media (max-width:900px){
+  .gallery-scroll .gs-sticky{
+    padding:calc(var(--header-h) + 26px) 0 clamp(14px,2.4vh,26px);
+  }
+}
+
+/* ---- mobitel ---- */
+@media (max-width:600px){
+  .gallery-scroll .gs-sticky{
+    padding:calc(var(--header-h) + 18px) 0 16px;
+    gap:10px;
+  }
+  .gs-head{
+    column-gap:10px;
+  }
+  .gs-head .eyebrow{
+    padding:8px 13px;
+    font-size:.66rem;
+    letter-spacing:.06em;
+  }
+  .gs-head .headline{
+    font-size:clamp(1.5rem,7vw,2.2rem);
+    max-width:20ch;
+    margin-top:10px;
+  }
+  .gs-meta{
+    gap:10px;
+    font-size:.62rem;
+    letter-spacing:.1em;
+  }
+  .gs-counter b{
+    font-size:.95rem;
+  }
+  .gs-hint{
+    display:none;
+  }
+}
+
+/* ---- mali mobitel ---- */
+@media (max-width:400px){
+  .gallery-scroll .gs-sticky{
+    padding:calc(var(--header-h) + 14px) 0 12px;
+  }
+  .gs-head .headline{
+    font-size:clamp(1.35rem,6.6vw,1.9rem);
+  }
+}
+
+/* ---- niski ekrani (mobitel u landscape-u) ---- */
+@media (max-height:520px) and (orientation:landscape){
+  .gallery-scroll .gs-sticky{
+    padding:calc(var(--header-h) + 18px) 0 10px;
+    gap:6px;
+  }
+  .gs-head .eyebrow{
+    display:none;
+  }
+  .gs-head .headline{
+    grid-column:1;
+    grid-row:1;
+    align-self:center;
+    margin-top:0;
+    max-width:30ch;
+    font-size:clamp(1.15rem,2.8vw,1.7rem);
+  }
+  .gs-head .gs-meta{
+    grid-row:1;
+    align-self:center;
+  }
+}
+
+/* ---- fallback bez JS-a: obican swipe ---- */
 .gallery-scroll.gs-native{
-  padding:0;
   scroll-margin-top:90px;
 }
 
@@ -2646,14 +2740,7 @@ width:calc(100% - 14px);
   scroll-snap-align:center;
 }
 
-.gs-native .gs-meta{
-  display:none;
-}
-
-@media (max-width:900px){
-  .gs-head{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:14px;
-  }
+@media (prefers-reduced-motion: reduce){
+  .gs-hint svg{animation:none}
+  .gs-item img{transition:none}
 }

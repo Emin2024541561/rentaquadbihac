@@ -213,6 +213,8 @@ behavior:"smooth"
 
 /* ===================================================
    HORIZONTALNA (PINNED) GALERIJA
+   vertikalni scroll = horizontalno kretanje trake
+   radi na svim uredjajima (TV, desktop, tablet, mobitel)
 =================================================== */
 (function () {
 
@@ -228,17 +230,28 @@ behavior:"smooth"
   const items    = Array.prototype.slice.call(track.children);
   if (!items.length) return;
 
-  const RATIO        = 16 / 10;   // format svake slike
-  const WIDTH_LIMIT  = 0.62;      // max sirina slike u odnosu na ekran
-  const SPEED_FACTOR = 0.55;      // koliko vertikalnog skrola treba
-  const MAX_SCREENS  = 5;         // gornja granica trajanja "kljucanja"
+  /* stariji browseri bez overflow:clip -> sticky puca ako je
+     overflow-x:hidden na <body>, pa ga prebacujemo na <html> */
+  if (!(window.CSS && CSS.supports && CSS.supports('overflow-x', 'clip'))) {
+    document.body.style.setProperty('overflow-x', 'visible', 'important');
+    document.documentElement.style.setProperty('overflow-x', 'hidden', 'important');
+  }
 
-  let isNative  = false;
+  const MIN_RATIO    = 0.66;   // najuspravniji format slike (mali ekrani)
+  const MAX_RATIO    = 1.6;    // 16:10 (veliki ekrani)
+  const SPEED_FACTOR = 0.55;   // koliko vertikalnog skrola treba
+  const MAX_SCREENS  = 5;      // gornja granica trajanja "kljucanja"
+
   let maxScroll = 0;
   let ticking   = false;
   let resizeId  = null;
+  let lastW     = 0;
+  let lastH     = 0;
 
   const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+
+  // JS radi -> gasimo fallback (swipe) prikaz
+  section.classList.remove('gs-native');
 
   function setProgress(p) {
     bar.style.width = (p * 100).toFixed(2) + '%';
@@ -247,11 +260,6 @@ behavior:"smooth"
   }
 
   function update() {
-    if (isNative) {
-      const m = viewport.scrollWidth - viewport.clientWidth;
-      setProgress(m > 0 ? viewport.scrollLeft / m : 0);
-      return;
-    }
     const total = section.offsetHeight - sticky.offsetHeight;
     const p = total > 0 ? clamp(-section.getBoundingClientRect().top / total, 0, 1) : 0;
     track.style.transform = 'translate3d(' + (-p * maxScroll).toFixed(2) + 'px,0,0)';
@@ -259,15 +267,11 @@ behavior:"smooth"
   }
 
   function layout() {
-    // pinned efekat samo na sirokim (landscape) ekranima
-    isNative =
-      window.innerWidth < 900 ||
-      window.innerWidth / window.innerHeight < 1.1 ||
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    lastW = window.innerWidth;
+    lastH = window.innerHeight;
 
-    section.classList.toggle('gs-native', isNative);
     section.style.height = '';
-    track.style.transform = '';
+    track.style.transform = 'translate3d(0,0,0)';
 
     // prva slika se poravnava sa naslovom
     const pad = Math.max(
@@ -276,23 +280,21 @@ behavior:"smooth"
     );
     section.style.setProperty('--gs-pad', pad + 'px');
 
-    const vw = viewport.clientWidth;
-    let w, h;
+    const vw   = viewport.clientWidth;
+    const rail = viewport.clientHeight;          // sva raspoloziva visina
 
-    if (isNative) {
-      w = Math.min(vw - pad * 2, 640);
-      h = w / RATIO;
-    } else {
-      h = viewport.clientHeight;          // sva raspoloziva visina
-      w = h * RATIO;
-      const maxW = vw * WIDTH_LIMIT;
-      if (w > maxW) { w = maxW; h = w / RATIO; }
-    }
+    // koliko sirine jedna slika smije zauzeti
+    let limit = vw < 700 ? 0.86 : (vw < 1100 ? 0.74 : 0.62);
+    if (rail / vw > 1.25) limit = Math.max(limit, 0.92);   // uski i visoki ekrani
+    const maxW = Math.min(vw * limit, vw - Math.min(pad, 24) * 2);
+
+    // format se prilagodjava obliku ekrana -> nema praznog prostora
+    const ratio = clamp(maxW / rail, MIN_RATIO, MAX_RATIO);
+    const w = Math.min(maxW, rail * ratio);
+    const h = w / ratio;
 
     section.style.setProperty('--gs-w', Math.round(w) + 'px');
     section.style.setProperty('--gs-h', Math.round(h) + 'px');
-
-    if (isNative) { maxScroll = 0; update(); return; }
 
     const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
     const trackW = items.length * w + (items.length - 1) * gap + pad * 2;
@@ -314,30 +316,27 @@ behavior:"smooth"
   };
 
   window.addEventListener('scroll', onScroll, { passive: true });
-  viewport.addEventListener('scroll', onScroll, { passive: true });
+
   window.addEventListener('resize', () => {
+    // na mobitelu se innerHeight mijenja kad se sakrije adresna traka
+    // -> to nije prava promjena velicine, preskacemo da nema trzanja
+    if (window.innerWidth === lastW && Math.abs(window.innerHeight - lastH) < 140) {
+      lastH = window.innerHeight;
+      return;
+    }
     clearTimeout(resizeId);
     resizeId = setTimeout(layout, 120);
   });
-  window.addEventListener('orientationchange', () => setTimeout(layout, 250));
+
+  window.addEventListener('orientationchange', () => setTimeout(layout, 300));
   window.addEventListener('load', layout);
 
-  // slike se ucitaju prije nego se dodje do sekcije (nema praznih polja)
-  if ('IntersectionObserver' in window) {
-    const preload = new IntersectionObserver((entries, obs) => {
-      entries.forEach(e => {
-        if (!e.isIntersecting) return;
-        items.forEach(fig => {
-          const img = fig.querySelector('img');
-          if (img && img.loading === 'lazy') img.loading = 'eager';
-        });
-        obs.disconnect();
-      });
-    }, { rootMargin: '150% 0px' });
-    preload.observe(section);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => layout()).catch(() => {});
   }
 
   layout();
-  setTimeout(layout, 400);
+  setTimeout(layout, 300);
+  setTimeout(layout, 900);
 
 })();
