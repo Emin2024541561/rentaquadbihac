@@ -36,28 +36,15 @@ const loader = document.getElementById('loader');
       });
     });
 
-    /* Reveal animacija.
-       threshold 0 -> element se prikaze cim ijedan njegov dio udje u ekran.
-       (Ranije je bilo 0.14 = 14% elementa mora biti vidljivo; kod visokih
-       blokova na mobitelu, npr. recenzija u jednoj koloni, to se nikad ne
-       desi pa je sadrzaj ostajao nevidljiv.) */
-    const revealEls = document.querySelectorAll('.reveal');
-    if ('IntersectionObserver' in window) {
-      const revealObserver = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('show');
-            revealObserver.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0, rootMargin: '0px 0px -40px 0px' });
-
-      revealEls.forEach(el => {
-        if (!el.classList.contains('show')) revealObserver.observe(el);
+    const revealObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('show');
       });
-    } else {
-      revealEls.forEach(el => el.classList.add('show'));
-    }
+    }, { threshold: 0.14 });
+
+    document.querySelectorAll('.reveal').forEach(el => {
+      if (!el.classList.contains('show')) revealObserver.observe(el);
+    });
 
     const countObserver = new IntersectionObserver(entries => {
       entries.forEach(entry => {

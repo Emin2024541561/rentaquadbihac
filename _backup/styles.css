@@ -2744,37 +2744,3 @@ width:calc(100% - 14px);
   .gs-hint svg{animation:none}
   .gs-item img{transition:none}
 }
-
-/* ===================================================
-   RECENZIJE - UVIJEK VIDLJIVE NA SVIM EKRANIMA
-   (sekcija se nikad ne sakriva animacijom)
-=================================================== */
-#recenzije .review-grid,
-#recenzije .review,
-#recenzije .review p,
-#recenzije .review-images,
-#recenzije .review-images img{
-  opacity:1 !important;
-  visibility:visible !important;
-  filter:none !important;
-}
-#recenzije .review-grid{
-  display:grid;
-  transform:none !important;
-}
-#recenzije .review{
-  height:auto;
-  overflow:visible;
-}
-#recenzije .review p{
-  display:block;
-  overflow-wrap:anywhere;
-}
-@media (max-width:768px){
-  #recenzije .review{min-height:0}
-  #recenzije .review-images img{
-    width:calc(50% - 5px);
-    height:auto;
-    aspect-ratio:4/3;
-  }
-}
